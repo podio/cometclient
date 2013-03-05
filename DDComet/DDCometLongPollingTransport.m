@@ -3,7 +3,6 @@
 #import "DDCometClient.h"
 #import "DDCometMessage.h"
 #import "DDQueue.h"
-#import "JSON.h"
 
 
 @interface DDCometLongPollingTransport ()
@@ -126,10 +125,14 @@
 - (NSURLRequest *)requestWithMessages:(NSArray *)messages
 {
 	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:m_client.endpointURL];
-	
-	SBJsonWriter *jsonWriter = [[SBJsonWriter alloc] init];    
-    NSData *body = [jsonWriter dataWithObject:messages];
-    [jsonWriter release];
+  
+  NSMutableArray *messagesData = [[NSMutableArray alloc] initWithCapacity:[messages count]];
+  for (DDCometMessage *message in messages) {
+    [messagesData addObject:[message proxyForJson]];
+  }
+  
+	NSData *body = [NSJSONSerialization dataWithJSONObject:messagesData options:0 error:nil];
+  [messagesData release];
 	
 	[request setHTTPMethod:@"POST"];
 	[request setValue:@"application/json;charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
@@ -165,10 +168,7 @@
 	NSData *responseData = [[m_responseDatas objectForKey:[self keyWithConnection:connection]] retain];
 	[m_responseDatas removeObjectForKey:[self keyWithConnection:connection]];
 	
-	SBJsonParser *parser = [[SBJsonParser alloc] init];
-	NSArray *responses = [parser objectWithData:responseData];
-	[parser release];
-	parser = nil;
+  NSArray *responses = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil];
 	[responseData release];
 	responseData = nil;
 	
