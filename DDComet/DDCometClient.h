@@ -1,6 +1,11 @@
 
 #import <Foundation/Foundation.h>
 
+#ifdef DEBUG
+  #define DDCometClientLog(format, ...) NSLog(format, ##__VA_ARGS__)
+#else
+  #define DDCometClientLog(format, ...)
+#endif
 
 @class DDCometLongPollingTransport;
 @class DDCometMessage;
