@@ -81,9 +81,14 @@
 
 - (DDCometMessage *)subscribeToChannel:(NSString *)channel target:(id)target selector:(SEL)selector
 {
-	DDCometMessage *message = [DDCometMessage messageWithChannel:@"/meta/subscribe"];
+  [self subscribeToChannel:channel extensions:nil target:target selector:selector];
+}
+
+- (DDCometMessage *)subscribeToChannel:(NSString *)channel extensions:(id)extensions target:(id)target selector:(SEL)selector {
+  DDCometMessage *message = [DDCometMessage messageWithChannel:@"/meta/subscribe"];
 	message.ID = [self nextMessageID];
 	message.subscription = channel;
+	message.ext = extensions;
 	DDCometSubscription *subscription = [[[DDCometSubscription alloc] initWithChannel:channel target:target selector:selector] autorelease];
 	@synchronized(m_pendingSubscriptions)
 	{

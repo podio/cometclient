@@ -43,6 +43,7 @@ typedef enum
 - (DDCometMessage *)handshake;
 - (DDCometMessage *)disconnect;
 - (DDCometMessage *)subscribeToChannel:(NSString *)channel target:(id)target selector:(SEL)selector;
+- (DDCometMessage *)subscribeToChannel:(NSString *)channel extensions:(id)extensions target:(id)target selector:(SEL)selector;
 - (DDCometMessage *)unsubsubscribeFromChannel:(NSString *)channel target:(id)target selector:(SEL)selector;
 - (DDCometMessage *)publishData:(id)data toChannel:(NSString *)channel;
 
