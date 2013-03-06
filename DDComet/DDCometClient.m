@@ -176,6 +176,7 @@
 				
 				DDCometMessage *connectMessage = [DDCometMessage messageWithChannel:@"/meta/connect"];
 				connectMessage.connectionType = @"long-polling";
+				connectMessage.advice = @{@"timeout": @0};
 				[self sendMessage:connectMessage];
 				
 				if (m_delegate && [m_delegate respondsToSelector:@selector(cometClientHandshakeDidSucceed:)])
