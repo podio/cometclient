@@ -60,7 +60,12 @@
 
 - (DDCometMessage *)handshake
 {
-	m_state = DDCometStateConnecting;
+  if (m_state == DDCometStateConnecting) {
+    DDCometClientLog(@"Only one pending handshake allowed at one time.");
+    return nil;
+  }
+  
+  m_state = DDCometStateConnecting;
 	
 	DDCometMessage *message = [DDCometMessage messageWithChannel:@"/meta/handshake"];
 	message.version = @"1.0";
@@ -193,20 +198,31 @@
 		{
 			if (message.advice)
 			{
-				[m_advice release];
-				m_advice = [message.advice retain];
+          [m_advice release];
+          m_advice = [message.advice retain];
 			}
-			if (![message.successful boolValue])
+			
+      if (![message.successful boolValue])
 			{
-				m_state = DDCometStateDisconnected;
-				if (m_delegate && [m_delegate respondsToSelector:@selector(cometClient:connectDidFailWithError:)])
-					[m_delegate cometClient:self connectDidFailWithError:message.error];
-			}
-			else if (m_state == DDCometStateConnecting)
-			{
-				m_state = DDCometStateConnected;
-				if (m_delegate && [m_delegate respondsToSelector:@selector(cometClientConnectDidSucceed:)])
-					[m_delegate cometClientConnectDidSucceed:self];
+          m_state = DDCometStateDisconnected;
+          if (m_delegate && [m_delegate respondsToSelector:@selector(cometClient:connectDidFailWithError:)])
+          {
+              [m_delegate cometClient:self connectDidFailWithError:message.error];
+          }
+        
+          NSString *reconnectAdvice = [m_advice objectForKey:@"reconnect"];
+          if ([reconnectAdvice isEqualToString:@"handshake"]) {
+              DDCometClientLog(@"Connection failed, retrying handshake as adviced...");
+              [self handshake];
+          }
+      }
+      else if (m_state == DDCometStateConnecting)
+      {
+          m_state = DDCometStateConnected;
+          if (m_delegate && [m_delegate respondsToSelector:@selector(cometClientConnectDidSucceed:)])
+          {
+              [m_delegate cometClientConnectDidSucceed:self];
+          }
 			}
 		}
 		else if ([channel isEqualToString:@"/meta/disconnect"])
