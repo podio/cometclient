@@ -37,9 +37,18 @@
 
 + (NSError *)errorWithBayeuxFormat:(NSString *)string
 {
-	NSArray *components = [string componentsSeparatedByString:@":"];
-	NSInteger code = [[components objectAtIndex:0] integerValue];
-	NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:[components objectAtIndex:2], NSLocalizedDescriptionKey, nil];
+  NSInteger code = 0;
+  NSString *description = nil;
+ 
+  NSArray *components = [string componentsSeparatedByString:@":"];
+  if ([components count] == 3) {
+    code = [[components objectAtIndex:0] integerValue];
+    description = [components objectAtIndex:2];
+  } else {
+    description = @"An unknown error occurred.";
+  }
+  
+  NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey, nil];
 	return [[[NSError alloc] initWithDomain:@"" code:code userInfo:userInfo] autorelease];
 }
 
