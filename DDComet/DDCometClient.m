@@ -210,6 +210,10 @@
               [m_delegate cometClient:self connectDidFailWithError:message.error];
           }
         
+          // Consider all channel subscriptions expired
+          [m_pendingSubscriptions removeAllObjects];
+          [m_subscriptions removeAllObjects];
+        
           NSString *reconnectAdvice = [m_advice objectForKey:@"reconnect"];
           if ([reconnectAdvice isEqualToString:@"handshake"]) {
               DDCometClientLog(@"Connection failed, retrying handshake as adviced...");
