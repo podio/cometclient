@@ -247,12 +247,16 @@
 			}
 			if ([message.successful boolValue])
 			{
-				@synchronized(m_subscriptions)
-				{
-					[m_subscriptions addObject:subscription];
-				}
-				if (m_delegate && [m_delegate respondsToSelector:@selector(cometClient:subscriptionDidSucceed:)])
-					[m_delegate cometClient:self subscriptionDidSucceed:subscription];
+        if (subscription)
+        {
+					@synchronized(m_subscriptions)
+					{
+						[m_subscriptions addObject:subscription];
+					}
+					
+					if (m_delegate && [m_delegate respondsToSelector:@selector(cometClient:subscriptionDidSucceed:)])
+						[m_delegate cometClient:self subscriptionDidSucceed:subscription];
+        }
 			}
 			else
 			{
