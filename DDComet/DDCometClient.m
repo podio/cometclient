@@ -86,7 +86,7 @@
 
 - (DDCometMessage *)subscribeToChannel:(NSString *)channel target:(id)target selector:(SEL)selector
 {
-  [self subscribeToChannel:channel extensions:nil target:target selector:selector];
+  return [self subscribeToChannel:channel extensions:nil target:target selector:selector];
 }
 
 - (DDCometMessage *)subscribeToChannel:(NSString *)channel extensions:(id)extensions target:(id)target selector:(SEL)selector {
