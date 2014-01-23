@@ -55,7 +55,7 @@
 - (NSString *)bayeuxFormat
 {
 	NSString *args = @"";
-	NSArray *components = [NSArray arrayWithObjects:[NSString stringWithFormat:@"%d", [self code]], args, [self localizedDescription], nil];
+	NSArray *components = [NSArray arrayWithObjects:[NSString stringWithFormat:@"%ld", (long)[self code]], args, [self localizedDescription], nil];
 	return [components componentsJoinedByString:@":"];
 }
 
