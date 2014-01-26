@@ -40,7 +40,7 @@ typedef enum
 @property (nonatomic, readonly) NSString *clientID;
 @property (nonatomic, readonly) NSURL *endpointURL;
 @property (nonatomic, readonly) DDCometState state;
-@property (nonatomic, readonly) NSDictionary *advice;
+@property (readonly) NSDictionary *advice;
 @property (nonatomic, assign) id<DDCometClientDelegate> delegate;
 
 - (id)initWithURL:(NSURL *)endpointURL;
