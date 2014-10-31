@@ -1,7 +1,9 @@
 
 #import <Foundation/Foundation.h>
 
-#ifdef DEBUG
+#define DDLOGGING_ENABLED 0
+
+#if (defined(DEBUG) && DDLOGGING_ENABLED)
   #define DDCometClientLog(format, ...) NSLog(format, ##__VA_ARGS__)
 #else
   #define DDCometClientLog(format, ...)

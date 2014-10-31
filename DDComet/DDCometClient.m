@@ -61,7 +61,6 @@
 - (DDCometMessage *)handshake
 {
   if (m_state == DDCometStateConnecting) {
-    DDCometClientLog(@"Only one pending handshake allowed at one time.");
     return nil;
   }
   
@@ -157,7 +156,6 @@
 	message.clientID = m_clientID;
 	if (!message.ID)
 		message.ID = [self nextMessageID];
-	DDCometClientLog(@"Sending message: %@", message);
 	[m_outgoingQueue addObject:message];
 	
 	if (m_transport == nil)
@@ -169,7 +167,6 @@
 
 - (void)handleMessage:(DDCometMessage *)message
 {
-	DDCometClientLog(@"Message received: %@", message);
 	NSString *channel = message.channel;
 	if ([channel hasPrefix:@"/meta/"])
 	{
@@ -178,7 +175,7 @@
 			if ([message.successful boolValue])
 			{
 				m_clientID = [message.clientID retain];
-				
+        
 				DDCometMessage *connectMessage = [DDCometMessage messageWithChannel:@"/meta/connect"];
 				connectMessage.connectionType = @"long-polling";
 				connectMessage.advice = @{@"timeout": @0};
@@ -203,7 +200,7 @@
 			}
 			
       if (![message.successful boolValue])
-			{
+      {
           m_state = DDCometStateDisconnected;
           if (m_delegate && [m_delegate respondsToSelector:@selector(cometClient:connectDidFailWithError:)])
           {
@@ -216,7 +213,6 @@
         
           NSString *reconnectAdvice = [m_advice objectForKey:@"reconnect"];
           if ([reconnectAdvice isEqualToString:@"handshake"]) {
-              DDCometClientLog(@"Connection failed, retrying handshake as adviced...");
               [self handshake];
           }
       }
