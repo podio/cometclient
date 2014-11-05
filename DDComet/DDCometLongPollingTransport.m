@@ -1,15 +1,20 @@
 
+#import <Security/Security.h>
 #import "DDCometLongPollingTransport.h"
 #import "DDCometClient.h"
 #import "DDCometMessage.h"
 #import "DDQueue.h"
-
+#import "DDSecurityHelpers.h"
 
 @interface DDCometLongPollingTransport ()
+
+@property (nonatomic, copy, readonly) NSSet *pinnedPublicKeys;
 
 @end
 
 @implementation DDCometLongPollingTransport
+
+@synthesize pinnedPublicKeys = m_pinnedPublicKeys;
 
 - (id)initWithClient:(DDCometClient *)client
 {
@@ -23,6 +28,7 @@
 
 - (void)dealloc
 {
+	[m_pinnedPublicKeys release];
 	[m_responseDatas release];
 	[m_client release];
 	[super dealloc];
@@ -36,6 +42,49 @@
 - (void)cancel
 {
 	m_shouldCancel = YES;
+}
+
+- (NSSet *)pinnedPublicKeys {
+	if (!m_pinnedPublicKeys) {
+		NSMutableSet *publicKeys = [NSMutableSet new];
+		
+		NSArray *paths = [[NSBundle bundleForClass:[self class]] pathsForResourcesOfType:@"cer" inDirectory:@"."];
+		for (NSString *path in paths) {
+			NSData *certData = [NSData dataWithContentsOfFile:path];
+   
+			if (certData) {
+				SecCertificateRef cert = SecCertificateCreateWithData(NULL, (__bridge CFDataRef)certData);
+				
+				if (cert) {
+					id publicKey = DDPublicKeyForCertificate(cert);
+					[publicKeys addObject:(id)publicKey];
+					CFRelease(cert);
+				}
+			}
+		}
+		
+		m_pinnedPublicKeys = [publicKeys copy];
+		[publicKeys release];
+	}
+	
+	return m_pinnedPublicKeys;
+}
+
+- (BOOL)comparePublicKeysOfBundledCertificatesToCertificate:(SecCertificateRef)cert {
+	NSParameterAssert(cert != NULL);
+	
+	BOOL matches = NO;
+	
+	id publicKey = DDPublicKeyForCertificate(cert);
+	for (id pinnedPublicKey in self.pinnedPublicKeys) {
+		matches = DDKeyIsEqualToKey((__bridge SecKeyRef)publicKey, (__bridge SecKeyRef)pinnedPublicKey);
+		
+		if (matches) {
+			break;
+		}
+	}
+	
+	return matches;
 }
 
 #pragma mark -
@@ -185,6 +234,24 @@
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
 	[m_responseDatas removeObjectForKey:[self keyWithConnection:connection]];
+}
+
+- (void)connection:(NSURLConnection *)connection willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
+	if (!m_client.usesSSLPublicKeyPinning) {
+		[challenge.sender performDefaultHandlingForAuthenticationChallenge:challenge];
+		return;
+	}
+	
+	SecTrustRef serverTrust = challenge.protectionSpace.serverTrust;
+	SecCertificateRef certificate = DDFirstCertificateFromTrust(serverTrust);
+	
+	if (certificate != NULL && [self comparePublicKeysOfBundledCertificatesToCertificate:certificate]) {
+		NSURLCredential *credential = [NSURLCredential credentialForTrust:serverTrust];
+		[challenge.sender useCredential:credential forAuthenticationChallenge:challenge];
+	}
+	else {
+		[challenge.sender cancelAuthenticationChallenge:challenge];
+	}
 }
 
 @end

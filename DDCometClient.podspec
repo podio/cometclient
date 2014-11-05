@@ -10,4 +10,6 @@ Pod::Spec.new do |s|
 
   s.source_files = 'DDComet/**/*.{h,m}'
   s.requires_arc = false
+  
+  s.frameworks   = 'Security'
 end

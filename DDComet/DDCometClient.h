@@ -43,6 +43,7 @@ typedef enum
 @property (nonatomic, readonly) NSURL *endpointURL;
 @property (nonatomic, readonly) DDCometState state;
 @property (readonly) NSDictionary *advice;
+@property (readonly) BOOL usesSSLPublicKeyPinning;
 @property (nonatomic, assign) id<DDCometClientDelegate> delegate;
 
 - (id)initWithURL:(NSURL *)endpointURL;
