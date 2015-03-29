@@ -156,7 +156,7 @@
 	NSURLConnection *connection = [NSURLConnection connectionWithRequest:request delegate:self];
 	
 	if (connection) {
-		DDCometClientLog(@"-> SENDING MSG (%@)...", message.channel);
+		DDCometClientLog(@"-> SENDING MSG (channel:%@, client-id:%@)", message.channel, message.clientID);
 		NSRunLoop *runLoop = [NSRunLoop currentRunLoop];
 		[connection scheduleInRunLoop:runLoop forMode:[runLoop currentMode]];
 		[connection start];
@@ -225,7 +225,7 @@
 	for (NSDictionary *messageData in responses)
 	{
 		DDCometMessage *message = [DDCometMessage messageWithJson:messageData];
-		DDCometClientLog(@"-> RECEIVED MSG (%@): %@", message.channel, messageData);
+		DDCometClientLog(@"-> RECEIVED MSG (channel:%@, clientid:%@)", message.channel, message.clientID);
 		
 		[incomingQueue addObject:message];
 	}
