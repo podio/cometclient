@@ -107,20 +107,9 @@
 	DDCometMessage *message = [DDCometMessage messageWithChannel:@"/meta/unsubscribe"];
 	message.ID = [self nextMessageID];
 	message.subscription = channel;
-	@synchronized(m_subscriptions)
-	{
-		NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
-		NSUInteger count = [m_subscriptions count];
-		for (NSUInteger i = 0; i < count; i++)
-		{
-			DDCometSubscription *subscription = [m_subscriptions objectAtIndex:i];
-			if ([subscription.channel isEqualToString:channel] && subscription.target == target && subscription.selector == selector)
-			{
-				[indexes addIndex:i]; 
-			}
-		}
-		[m_subscriptions removeObjectsAtIndexes:indexes];
-	}
+  
+  [self removeSubscriptionsForChannel:channel target:target selector:selector];
+  
 	return message;
 }
 
@@ -129,7 +118,40 @@
 	DDCometMessage *message = [DDCometMessage messageWithChannel:channel];
 	message.data = data;
 	[self sendMessage:message];
+  
 	return message;
+}
+
+- (void)removeSubscriptionsForChannel:(NSString *)channel target:(id)target selector:(SEL)selector {
+  @synchronized(m_subscriptions)
+  {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    [m_subscriptions enumerateObjectsUsingBlock:^(DDCometSubscription *subscription, NSUInteger idx, BOOL *stop) {
+      if ([subscription.channel isEqualToString:channel] &&
+          subscription.target == target &&
+          subscription.selector == selector)
+      {
+        [indexes addIndex:idx];
+      }
+    }];
+    
+    [m_subscriptions removeObjectsAtIndexes:indexes];
+  }
+  
+  @synchronized(m_pendingSubscriptions)
+  {
+    NSMutableArray *keysToRemove = [NSMutableArray new];
+    [m_pendingSubscriptions enumerateKeysAndObjectsUsingBlock:^(id key, DDCometSubscription *subscription, BOOL *stop) {
+      if ([subscription.channel isEqualToString:channel] &&
+          subscription.target == target &&
+          subscription.selector == selector)
+      {
+        [keysToRemove addObject:key];
+      }
+    }];
+    
+    [m_pendingSubscriptions removeObjectsForKeys:keysToRemove];
+  }
 }
 
 #pragma mark -
@@ -208,8 +230,13 @@
           }
         
           // Consider all channel subscriptions expired
-          [m_pendingSubscriptions removeAllObjects];
-          [m_subscriptions removeAllObjects];
+          @synchronized(m_pendingSubscriptions) {
+              [m_pendingSubscriptions removeAllObjects];
+          }
+        
+          @synchronized(m_subscriptions) {
+              [m_subscriptions removeAllObjects];
+          }
         
           NSString *reconnectAdvice = [m_advice objectForKey:@"reconnect"];
           if ([reconnectAdvice isEqualToString:@"handshake"]) {
@@ -275,9 +302,11 @@
 				if ([subscription matchesChannel:message.channel])
 					[subscriptions addObject:subscription];
 			}
-		}
-		for (DDCometSubscription *subscription in subscriptions)
+    }
+    
+		for (DDCometSubscription *subscription in subscriptions) {
 			[subscription.target performSelector:subscription.selector withObject:message];
+		}
 	}
 }
 
